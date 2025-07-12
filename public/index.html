@@ -1,77 +1,180 @@
-<!-- public/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Aspire Club Registration</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Montserrat", sans-serif;
+    }
+
     body {
-      font-family: Arial, sans-serif;
-      background: linear-gradient(to right, #ffffff, #f4f4f4);
-      color: #000;
+      background: url('https://images.unsplash.com/photo-1521737604893-d14cc237f11d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1950&q=80') no-repeat center center fixed;
+      background-size: cover;
+      min-height: 100vh;
       display: flex;
-      flex-direction: column;
+      justify-content: center;
       align-items: center;
-      padding: 40px;
     }
-    form {
-      background: #fff;
-      padding: 20px;
+
+    .container {
+      background: rgba(255, 255, 255, 0.92);
+      padding: 35px 40px;
       border-radius: 12px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.1);
-      width: 300px;
-    }
-    input, textarea, select, button {
       width: 100%;
-      margin-bottom: 12px;
-      padding: 10px;
-      border: 1px solid #aaa;
-      border-radius: 6px;
+      max-width: 420px;
+      box-shadow: 10px 10px 0 rgba(0, 0, 0, 0.9);
+      border: 2px solid #000;
     }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 25px;
+      font-weight: 600;
+      font-size: 24px;
+      color: #000;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      color: #000;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #000;
+      border-radius: 5px;
+      font-size: 14px;
+      background: #fff;
+      color: #000;
+    }
+
+    .form-group textarea {
+      resize: none;
+    }
+
     button {
-      background: #000;
-      color: white;
+      width: 100%;
+      padding: 12px;
+      background-color: #000;
+      color: #fff;
+      font-weight: bold;
+      border: none;
+      border-radius: 5px;
       cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background-color: #333;
+    }
+
+    .status {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 14px;
+      color: #000;
+    }
+
+    @media screen and (max-width: 480px) {
+      .container {
+        padding: 25px;
+      }
     }
   </style>
 </head>
 <body>
-  <h2>📝 Aspire Club Registration</h2>
-  <form id="regForm">
-    <input type="text" name="name" placeholder="Your Name" required />
-    <input type="email" name="email" placeholder="Your Email" required />
-    <input type="text" name="department" placeholder="Department" required />
-    <select name="year" required>
-      <option value="">Select Year</option>
-      <option>1st Year</option>
-      <option>2nd Year</option>
-      <option>3rd Year</option>
-      <option>Final Year</option>
-    </select>
-    <textarea name="message" placeholder="Message" required></textarea>
-    <button type="submit">Register</button>
-  </form>
+
+  <div class="container">
+    <h2>Aspire Club</h2>
+    <form id="registrationForm">
+      <div class="form-group">
+        <label for="name">Full Name</label>
+        <input id="name" name="name" type="text" required />
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" required />
+      </div>
+
+      <div class="form-group">
+        <label for="department">Department</label>
+        <input id="department" name="department" type="text" required />
+      </div>
+
+      <div class="form-group">
+        <label for="year">Year</label>
+        <select id="year" name="year" required>
+          <option value="" disabled selected>Select Year</option>
+          <option value="1st">1st</option>
+          <option value="2nd">2nd</option>
+          <option value="3rd">3rd</option>
+          <option value="4th">4th</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="message">Why do you want to join?</label>
+        <textarea id="message" name="message" rows="3"></textarea>
+      </div>
+
+      <button type="submit">Register</button>
+      <div class="status" id="status"></div>
+    </form>
+  </div>
 
   <script>
-    document.getElementById("regForm").addEventListener("submit", async (e) => {
+    const form = document.getElementById("registrationForm");
+    const status = document.getElementById("status");
+
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const form = e.target;
+
       const data = {
         name: form.name.value,
         email: form.email.value,
         department: form.department.value,
         year: form.year.value,
-        message: form.message.value,
+        message: form.message.value
       };
-      const res = await fetch("/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      const result = await res.json();
-      alert(result.message);
-      form.reset();
+
+      status.innerText = "Submitting...";
+
+      try {
+        const res = await fetch("https://aspire-club.onrender.com/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+
+        if (result.status === "success") {
+          status.innerText = "✅ Registered successfully!";
+          form.reset();
+        } else {
+          status.innerText = "❌ Something went wrong!";
+        }
+      } catch (err) {
+        status.innerText = "❌ Network error!";
+      }
     });
   </script>
+
 </body>
 </html>
