@@ -1,180 +1,41 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Aspire Club Registration</title>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: "Montserrat", sans-serif;
+const express = require("express");
+const fs = require("fs");
+const path = require("path");
+const cors = require("cors");
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+const csvPath = path.join(__dirname, "data", "registrations.csv");
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.static("public"));
+
+// Ensure CSV file exists
+if (!fs.existsSync(csvPath)) {
+  fs.mkdirSync(path.dirname(csvPath), { recursive: true });
+  fs.writeFileSync(csvPath, "Name,Email,Department,Year,Message\n");
+}
+
+// API to save registration
+app.post("/register", (req, res) => {
+  const { name, email, department, year, message } = req.body;
+  const entry = `"${name}","${email}","${department}","${year}","${message}"\n`;
+
+  fs.appendFile(csvPath, entry, (err) => {
+    if (err) {
+      console.error("❌ Error writing to CSV:", err);
+      return res.status(500).json({ status: "error", message: "CSV write failed" });
     }
 
-    body {
-      background: url('https://images.unsplash.com/photo-1521737604893-d14cc237f11d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1950&q=80') no-repeat center center fixed;
-      background-size: cover;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
+    console.log("✅ Data saved to CSV");
+    return res.json({ status: "success", message: "Registration saved" });
+  });
+});
 
-    .container {
-      background: rgba(255, 255, 255, 0.92);
-      padding: 35px 40px;
-      border-radius: 12px;
-      width: 100%;
-      max-width: 420px;
-      box-shadow: 10px 10px 0 rgba(0, 0, 0, 0.9);
-      border: 2px solid #000;
-    }
-
-    h2 {
-      text-align: center;
-      margin-bottom: 25px;
-      font-weight: 600;
-      font-size: 24px;
-      color: #000;
-    }
-
-    .form-group {
-      margin-bottom: 18px;
-    }
-
-    .form-group label {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 14px;
-      color: #000;
-    }
-
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
-      width: 100%;
-      padding: 10px;
-      border: 2px solid #000;
-      border-radius: 5px;
-      font-size: 14px;
-      background: #fff;
-      color: #000;
-    }
-
-    .form-group textarea {
-      resize: none;
-    }
-
-    button {
-      width: 100%;
-      padding: 12px;
-      background-color: #000;
-      color: #fff;
-      font-weight: bold;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-
-    button:hover {
-      background-color: #333;
-    }
-
-    .status {
-      margin-top: 20px;
-      text-align: center;
-      font-size: 14px;
-      color: #000;
-    }
-
-    @media screen and (max-width: 480px) {
-      .container {
-        padding: 25px;
-      }
-    }
-  </style>
-</head>
-<body>
-
-  <div class="container">
-    <h2>Aspire Club</h2>
-    <form id="registrationForm">
-      <div class="form-group">
-        <label for="name">Full Name</label>
-        <input id="name" name="name" type="text" required />
-      </div>
-
-      <div class="form-group">
-        <label for="email">Email</label>
-        <input id="email" name="email" type="email" required />
-      </div>
-
-      <div class="form-group">
-        <label for="department">Department</label>
-        <input id="department" name="department" type="text" required />
-      </div>
-
-      <div class="form-group">
-        <label for="year">Year</label>
-        <select id="year" name="year" required>
-          <option value="" disabled selected>Select Year</option>
-          <option value="1st">1st</option>
-          <option value="2nd">2nd</option>
-          <option value="3rd">3rd</option>
-          <option value="4th">4th</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label for="message">Why do you want to join?</label>
-        <textarea id="message" name="message" rows="3"></textarea>
-      </div>
-
-      <button type="submit">Register</button>
-      <div class="status" id="status"></div>
-    </form>
-  </div>
-
-  <script>
-    const form = document.getElementById("registrationForm");
-    const status = document.getElementById("status");
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const data = {
-        name: form.name.value,
-        email: form.email.value,
-        department: form.department.value,
-        year: form.year.value,
-        message: form.message.value
-      };
-
-      status.innerText = "Submitting...";
-
-      try {
-        const res = await fetch("https://aspire-club.onrender.com/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data)
-        });
-
-        const result = await res.json();
-
-        if (result.status === "success") {
-          status.innerText = "✅ Registered successfully!";
-          form.reset();
-        } else {
-          status.innerText = "❌ Something went wrong!";
-        }
-      } catch (err) {
-        status.innerText = "❌ Network error!";
-      }
-    });
-  </script>
-
-</body>
-</html>
+// Server
+app.listen(PORT, () => {
+  console.log(`🚀 Aspire Club Backend running at http://localhost:${PORT}`);
+});
