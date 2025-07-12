@@ -1,37 +1,33 @@
-// server.js
-const express = require("express");
-const fs = require("fs");
-const path = require("path");
-const cors = require("cors");
-
+const express = require('express');
+const path = require('path');
+const bodyParser = require('body-parser');
 const app = express();
-const PORT = process.env.PORT || 3000;
-const CSV_FILE = path.join(__dirname, "submissions.csv");
+const PORT = process.env.PORT || 10000;
 
-app.use(cors());
-app.use(express.json());
+// Middleware
+app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
-app.post("/api/register", (req, res) => {
-  const { name, email, department, year, message } = req.body;
-
-  if (!name || !email || !department || !year) {
-    return res.status(400).json({ status: "error", message: "Missing required fields" });
-  }
-
-  const csvLine = `"${name}","${email}","${department}","${year}","${message || ''}"\n`;
-
-  fs.appendFile(CSV_FILE, csvLine, (err) => {
-    if (err) {
-      console.error("❌ Error saving to CSV:", err);
-      return res.status(500).json({ status: "error", message: "Server Error" });
-    }
-    console.log("✅ Data saved:", req.body);
-    res.json({ status: "success" });
-  });
+// Default route
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.get("/", (req, res) => {
-  res.send("Aspire Club Backend is Running ✅");
+// Replace with your actual Google Script URL
+const formURL = 'https://script.google.com/macros/s/AKfycbyWSLa6a8F-hoacEF99_66IG-WC0rokDXMwCuH802d4cQPTemklOqyzI6syq8E4QEbi/exec';
+
+app.post('/register', async (req, res) => {
+  try {
+    const response = await fetch(formURL, {
+      method: 'POST',
+      body: JSON.stringify(req.body),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ status: 'error', message: 'Submission failed' });
+  }
 });
 
 app.listen(PORT, () => {
