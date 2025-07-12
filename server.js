@@ -1,27 +1,38 @@
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
-require('dotenv').config();
+const express = require("express");
+const fs = require("fs");
+const path = require("path");
+const bodyParser = require("body-parser");
+const cors = require("cors");
 
 const app = express();
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
+const CSV_FILE = path.join(__dirname, "submissions.csv");
 
-// Middleware
 app.use(cors());
-app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+app.use(express.static("public"));
 
-// ✅ Serve static frontend files
-app.use(express.static(path.join(__dirname, 'public')));
+// Ensure CSV file has headers
+if (!fs.existsSync(CSV_FILE)) {
+    fs.writeFileSync(CSV_FILE, "Name,Email,Department,Year,Message,DateTime\n");
+}
 
-// ✅ Backend route
-const registerRoute = require('./routes/register');
-app.use('/api', registerRoute);
+app.post("/api/register", (req, res) => {
+    const { name, email, department, year, message } = req.body;
+    const datetime = new Date().toLocaleString();
 
-// ✅ Optional: welcome route
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    const row = `"${name}","${email}","${department}","${year}","${message}","${datetime}"\n`;
+
+    fs.appendFile(CSV_FILE, row, (err) => {
+        if (err) {
+            console.error("Error saving data:", err);
+            return res.status(500).json({ status: "error", message: "Failed to save data" });
+        }
+        res.json({ status: "success", message: "Registered successfully" });
+    });
 });
 
-app.listen(port, () => {
-  console.log(`🚀 Server running at http://localhost:${port}`);
+app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
