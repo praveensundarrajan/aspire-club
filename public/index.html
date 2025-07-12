@@ -1,41 +1,77 @@
-const express = require("express");
-const fs = require("fs");
-const path = require("path");
-const cors = require("cors");
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-const csvPath = path.join(__dirname, "data", "registrations.csv");
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.static("public"));
-
-// Ensure CSV file exists
-if (!fs.existsSync(csvPath)) {
-  fs.mkdirSync(path.dirname(csvPath), { recursive: true });
-  fs.writeFileSync(csvPath, "Name,Email,Department,Year,Message\n");
-}
-
-// API to save registration
-app.post("/register", (req, res) => {
-  const { name, email, department, year, message } = req.body;
-  const entry = `"${name}","${email}","${department}","${year}","${message}"\n`;
-
-  fs.appendFile(csvPath, entry, (err) => {
-    if (err) {
-      console.error("❌ Error writing to CSV:", err);
-      return res.status(500).json({ status: "error", message: "CSV write failed" });
+<!-- public/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Aspire Club Registration</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #ffffff, #f4f4f4);
+      color: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px;
     }
+    form {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      width: 300px;
+    }
+    input, textarea, select, button {
+      width: 100%;
+      margin-bottom: 12px;
+      padding: 10px;
+      border: 1px solid #aaa;
+      border-radius: 6px;
+    }
+    button {
+      background: #000;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h2>📝 Aspire Club Registration</h2>
+  <form id="regForm">
+    <input type="text" name="name" placeholder="Your Name" required />
+    <input type="email" name="email" placeholder="Your Email" required />
+    <input type="text" name="department" placeholder="Department" required />
+    <select name="year" required>
+      <option value="">Select Year</option>
+      <option>1st Year</option>
+      <option>2nd Year</option>
+      <option>3rd Year</option>
+      <option>Final Year</option>
+    </select>
+    <textarea name="message" placeholder="Message" required></textarea>
+    <button type="submit">Register</button>
+  </form>
 
-    console.log("✅ Data saved to CSV");
-    return res.json({ status: "success", message: "Registration saved" });
-  });
-});
-
-// Server
-app.listen(PORT, () => {
-  console.log(`🚀 Aspire Club Backend running at http://localhost:${PORT}`);
-});
+  <script>
+    document.getElementById("regForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const data = {
+        name: form.name.value,
+        email: form.email.value,
+        department: form.department.value,
+        year: form.year.value,
+        message: form.message.value,
+      };
+      const res = await fetch("/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const result = await res.json();
+      alert(result.message);
+      form.reset();
+    });
+  </script>
+</body>
+</html>
