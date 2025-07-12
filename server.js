@@ -1,11 +1,13 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const { exec } = require('child_process');
 const bodyParser = require('body-parser');
+
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// Make sure the /data directory exists
+// Ensure /data directory exists
 const dataDir = path.join(__dirname, 'data');
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir);
@@ -14,7 +16,7 @@ if (!fs.existsSync(dataDir)) {
 // Path to CSV file
 const csvFilePath = path.join(dataDir, 'registrations.csv');
 
-// Create CSV file with headers if not exists
+// Ensure CSV file has headers
 if (!fs.existsSync(csvFilePath)) {
   fs.writeFileSync(csvFilePath, 'Timestamp,Name,Email,Department,Year,Message\n');
 }
@@ -23,7 +25,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Save to CSV route
+// Register route
 app.post('/register', (req, res) => {
   const { name, email, department, year, message } = req.body;
   const timestamp = new Date().toISOString();
@@ -31,14 +33,36 @@ app.post('/register', (req, res) => {
 
   fs.appendFile(csvFilePath, row, (err) => {
     if (err) {
-      console.error('Error saving to CSV:', err);
+      console.error('❌ Error saving to CSV:', err);
       return res.status(500).json({ status: 'error', message: 'Failed to save' });
     }
-    return res.json({ status: 'success', message: 'Registration saved to CSV' });
+
+    console.log('✅ Registration saved.');
+
+    // Push to GitHub
+    gitPush();
+
+    return res.json({ status: 'success', message: 'Registration successful & pushed to GitHub' });
   });
 });
 
-// Default route
+// Git push function
+function gitPush() {
+  exec(`
+    git add data/registrations.csv &&
+    git commit -m "New registration added at ${new Date().toISOString()}" &&
+    git push
+  `, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`❌ Git error: ${error.message}`);
+      return;
+    }
+    console.log('✅ CSV pushed to GitHub');
+    console.log(stdout);
+  });
+}
+
+// Home route
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
