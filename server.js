@@ -23,7 +23,6 @@ if (!fs.existsSync(csvPath)) {
 // API to save registration
 app.post("/register", (req, res) => {
   const { name, email, department, year, message } = req.body;
-
   console.log("📥 Received registration:", req.body);
 
   const entry = `"${name}","${email}","${department}","${year}","${message}"\n`;
@@ -35,23 +34,23 @@ app.post("/register", (req, res) => {
 
     console.log("✅ Data saved to CSV");
 
-    // Git push logic
+    // Git commit & push
     const pushCommand = `
+      git config user.email "praveenraaja26@gmail.com" &&
+      git config user.name "Praveen Raaja" &&
       git add data/registrations.csv &&
       git commit -m "New registration on ${new Date().toISOString()}" &&
       git push origin main
     `;
 
-    exec(pushCommand, (err, stdout, stderr) => {
-      if (err) {
-        console.error("❌ Git push failed:", stderr);
-        return res.status(200).json({
-          status: "warning",
-          message: "Saved to CSV, but GitHub push failed"
-        });
+    exec(pushCommand, (error, stdout, stderr) => {
+      if (error) {
+        console.error("❌ Git push failed:", stderr || error.message);
+        return res.status(500).json({ status: "error", message: "Git push failed" });
       }
-      console.log("🚀 GitHub Push Successful");
-      return res.json({ status: "success", message: "Registered & pushed to GitHub" });
+
+      console.log("✅ Git push successful:\n", stdout);
+      return res.json({ status: "success", message: "Registration saved and pushed" });
     });
   });
 });
