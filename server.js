@@ -7,29 +7,34 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const CSV_FILE = path.join(__dirname, 'data', 'registrations.csv');
 
-// GitHub remote URL with token
-const GIT_REMOTE = process.env.GIT_REMOTE; // add this in .env
+// Paths
+const DATA_FILE = path.join(__dirname, 'data', 'registrations.csv');
+const GIT_REMOTE = process.env.GIT_REMOTE;
 
+// Middleware
 app.use(cors());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static('public'));
 
-// Ensure CSV file exists
-if (!fs.existsSync(CSV_FILE)) {
-  fs.mkdirSync(path.dirname(CSV_FILE), { recursive: true });
-  fs.writeFileSync(CSV_FILE, 'Timestamp,Name,Email,Department,Year,Message\n');
+// Ensure data folder and CSV file exist
+if (!fs.existsSync(path.join(__dirname, 'data'))) {
+  fs.mkdirSync(path.join(__dirname, 'data'));
+}
+if (!fs.existsSync(DATA_FILE)) {
+  fs.writeFileSync(DATA_FILE, 'Timestamp,Name,Email,Department,Year,Message\n');
 }
 
-// Registration Route
+// API endpoint
 app.post('/register', (req, res) => {
   const { name, email, department, year, message } = req.body;
   const timestamp = new Date().toISOString();
 
-  const row = `"${timestamp}","${name}","${email}","${department}","${year}","${message}"\n`;
+  const entry = `${timestamp},"${name}","${email}","${department}","${year}","${message}"\n`;
+
   try {
-    fs.appendFileSync(CSV_FILE, row);
+    fs.appendFileSync(DATA_FILE, entry);
     console.log('✅ Data saved to CSV');
 
     // Git setup and push
@@ -43,33 +48,24 @@ app.post('/register', (req, res) => {
         execSync(`git remote set-url origin ${GIT_REMOTE}`);
       }
 
-      try {
-        execSync('git checkout -b main');
-      } catch {
-        execSync('git checkout main');
-      }
-
+      execSync('git checkout main'); // Use existing main branch
       execSync('git add data/registrations.csv');
       execSync(`git commit -m "New registration on ${timestamp}"`);
-      execSync('git push -u origin main');
+      execSync('git push origin main');
 
       console.log('🚀 Data pushed to GitHub');
     } catch (gitErr) {
       console.error('❌ Git push failed:', gitErr.message);
     }
 
-    res.json({ status: 'success' });
+    res.status(200).json({ status: 'success', message: 'Registered successfully' });
   } catch (err) {
-    console.error('❌ Failed to save data:', err.message);
-    res.status(500).json({ status: 'error', message: 'Server error' });
+    console.error('❌ CSV Write Error:', err.message);
+    res.status(500).json({ status: 'error', message: 'Internal Server Error' });
   }
 });
 
-// Serve frontend
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
+// Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Aspire Club Backend running at http://localhost:${PORT}`);
+  console.log(`🚀 Aspire Club Backend is Running on http://localhost:${PORT}`);
 });
