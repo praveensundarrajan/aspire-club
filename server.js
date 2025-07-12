@@ -1,72 +1,64 @@
+// server.js
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
-const bodyParser = require('body-parser');
+require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 3000;
 
-// Ensure /data directory exists
-const dataDir = path.join(__dirname, 'data');
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir);
+// Serve static files (HTML/CSS/JS)
+app.use(express.static('public'));
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
+const csvPath = path.join(__dirname, 'data', 'registrations.csv');
+
+// Ensure 'data' folder exists
+if (!fs.existsSync(path.dirname(csvPath))) {
+    fs.mkdirSync(path.dirname(csvPath), { recursive: true });
 }
 
-// Path to CSV file
-const csvFilePath = path.join(dataDir, 'registrations.csv');
-
-// Ensure CSV file has headers
-if (!fs.existsSync(csvFilePath)) {
-  fs.writeFileSync(csvFilePath, 'Timestamp,Name,Email,Department,Year,Message\n');
+// Ensure CSV file exists with header
+if (!fs.existsSync(csvPath)) {
+    fs.writeFileSync(csvPath, 'Timestamp,Name,Email,Department,Year,Message\n');
 }
 
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Register route
+// Handle registration form submission
 app.post('/register', (req, res) => {
-  const { name, email, department, year, message } = req.body;
-  const timestamp = new Date().toISOString();
-  const row = `"${timestamp}","${name}","${email}","${department}","${year}","${message}"\n`;
+    const { name, email, department, year, message } = req.body;
+    const timestamp = new Date().toISOString();
 
-  fs.appendFile(csvFilePath, row, (err) => {
-    if (err) {
-      console.error('❌ Error saving to CSV:', err);
-      return res.status(500).json({ status: 'error', message: 'Failed to save' });
-    }
+    const entry = `"${timestamp}","${name}","${email}","${department}","${year}","${message}"\n`;
 
-    console.log('✅ Registration saved.');
+    // Append data to CSV
+    fs.appendFileSync(csvPath, entry, 'utf8');
+    console.log('✅ Data saved to CSV');
 
     // Push to GitHub
     gitPush();
 
-    return res.json({ status: 'success', message: 'Registration successful & pushed to GitHub' });
-  });
+    res.json({ status: 'success', message: 'Registration successful!' });
 });
 
 // Git push function
 function gitPush() {
-  exec(`
-    git add data/registrations.csv &&
-    git commit -m "New registration added at ${new Date().toISOString()}" &&
-    git push
-  `, (error, stdout, stderr) => {
-    if (error) {
-      console.error(`❌ Git error: ${error.message}`);
-      return;
-    }
-    console.log('✅ CSV pushed to GitHub');
-    console.log(stdout);
-  });
+    exec(`
+        git remote set-url origin ${process.env.GIT_REMOTE} &&
+        git add data/registrations.csv &&
+        git commit -m "New registration on ${new Date().toISOString()}" &&
+        git push origin HEAD
+    `, (error, stdout, stderr) => {
+        if (error) {
+            console.error("❌ Git push failed:", error.message);
+            return;
+        }
+        console.log("🚀 CSV pushed to GitHub!");
+        console.log(stdout);
+    });
 }
 
-// Home route
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
 app.listen(PORT, () => {
-  console.log(`🚀 Aspire Club backend running at http://localhost:${PORT}`);
+    console.log(`🚀 Aspire Club Backend running at http://localhost:${PORT}`);
 });
