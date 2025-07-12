@@ -1,135 +1,177 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Aspire Club Registration</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    /* Base styles */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Segoe UI', sans-serif;
+    :root {
+      --bg-color: linear-gradient(135deg, #1f1c2c, #928dab);
+      --primary: #00ffe7;
+      --glass-bg: rgba(255, 255, 255, 0.1);
+      --glass-border: rgba(255, 255, 255, 0.3);
     }
 
     body {
-      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      background: var(--bg-color);
+      font-family: 'Segoe UI', sans-serif;
       color: #fff;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
-      animation: bgScroll 20s linear infinite;
+      height: 100vh;
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
     }
 
-    @keyframes bgScroll {
-      0% { background-position: 0 0; }
-      100% { background-position: 1000px 0; }
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
 
-    .form-container {
-      background: rgba(255, 255, 255, 0.05);
-      padding: 30px;
-      border-radius: 15px;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 0 20px rgba(0, 255, 150, 0.4);
+    .form-box {
+      backdrop-filter: blur(15px);
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      box-shadow: 0 0 30px rgba(0, 255, 234, 0.2);
+      padding: 40px;
       width: 100%;
       max-width: 500px;
-      animation: fadeIn 1s ease-in-out;
+      transition: 0.4s;
+      animation: fadeIn 1s ease;
     }
 
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-20px); }
+      from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-    .form-container h1 {
+    h2 {
       text-align: center;
-      margin-bottom: 20px;
-      color: #00ffc3;
+      color: var(--primary);
+      margin-bottom: 30px;
+      font-size: 2rem;
     }
 
-    label {
-      display: block;
-      margin: 10px 0 5px;
-      font-weight: 600;
-      color: #cafff8;
+    .input-group {
+      position: relative;
+      margin-bottom: 25px;
     }
 
-    input, select, textarea {
+    .input-group input,
+    .input-group select,
+    .input-group textarea {
       width: 100%;
-      padding: 10px 15px;
+      padding: 15px 10px;
       border: none;
-      border-radius: 8px;
-      margin-bottom: 15px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
       font-size: 1rem;
-      background: #111;
-      color: #0f0;
-      outline: 2px solid #00ffc3;
-      transition: 0.2s;
+      outline: none;
+      transition: 0.3s;
     }
 
-    input:focus, select:focus, textarea:focus {
-      outline-color: #00ff99;
-      background: #000;
+    .input-group label {
+      position: absolute;
+      top: 12px;
+      left: 15px;
+      font-size: 1rem;
+      color: #ccc;
+      pointer-events: none;
+      transition: 0.3s;
+    }
+
+    .input-group input:focus + label,
+    .input-group input:not(:placeholder-shown) + label,
+    .input-group textarea:focus + label,
+    .input-group textarea:not(:placeholder-shown) + label,
+    .input-group select:focus + label,
+    .input-group select:not([value=""]) + label {
+      top: -12px;
+      left: 10px;
+      font-size: 0.75rem;
+      color: var(--primary);
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 0 5px;
+      border-radius: 5px;
     }
 
     button {
       width: 100%;
-      padding: 12px;
-      font-size: 1.1rem;
-      font-weight: bold;
-      background: linear-gradient(45deg, #00ffae, #00ffc3);
+      padding: 15px;
+      background: var(--primary);
       border: none;
       border-radius: 10px;
+      font-size: 1rem;
+      font-weight: bold;
+      color: #000;
       cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 0 15px var(--primary);
+      transition: 0.3s ease-in-out;
     }
 
     button:hover {
       transform: scale(1.05);
-      box-shadow: 0 0 15px #00ffae;
+      box-shadow: 0 0 25px var(--primary);
     }
 
     .status {
-      margin-top: 15px;
+      margin-top: 20px;
       text-align: center;
       font-weight: bold;
-      color: #fff;
+    }
+
+    @media screen and (max-width: 600px) {
+      .form-box {
+        padding: 25px;
+        margin: 20px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="form-container">
-    <h1>Join Aspire Club 🚀</h1>
-    <form id="regForm">
+  <form class="form-box" id="regForm">
+    <h2>Join Aspire Club 🚀</h2>
+
+    <div class="input-group">
+      <input type="text" id="name" required placeholder=" " />
       <label for="name">Full Name</label>
-      <input type="text" id="name" required />
+    </div>
 
+    <div class="input-group">
+      <input type="email" id="email" required placeholder=" " />
       <label for="email">Email</label>
-      <input type="email" id="email" required />
+    </div>
 
+    <div class="input-group">
+      <input type="text" id="dept" required placeholder=" " />
       <label for="dept">Department</label>
-      <input type="text" id="dept" required />
+    </div>
 
-      <label for="year">Year</label>
+    <div class="input-group">
       <select id="year" required>
-        <option value="" disabled selected>Select Year</option>
+        <option value="" hidden disabled selected></option>
         <option>1st</option>
         <option>2nd</option>
         <option>3rd</option>
         <option>4th</option>
       </select>
+      <label for="year">Year</label>
+    </div>
 
-      <label for="msg">Message</label>
-      <textarea id="msg" rows="3" placeholder="Why do you want to join?"></textarea>
+    <div class="input-group">
+      <textarea id="msg" rows="3" placeholder=" "></textarea>
+      <label for="msg">Why do you want to join?</label>
+    </div>
 
-      <button type="submit">🚀 Submit</button>
-      <div class="status" id="statusMsg"></div>
-    </form>
-  </div>
+    <button type="submit">✨ Submit</button>
+    <div class="status" id="statusMsg"></div>
+  </form>
 
   <script>
     const form = document.getElementById('regForm');
@@ -137,6 +179,7 @@
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+
       const data = {
         name: form.name.value,
         email: form.email.value,
@@ -145,7 +188,7 @@
         message: form.msg.value
       };
 
-      statusMsg.innerText = "Submitting...";
+      statusMsg.textContent = "Submitting...";
 
       try {
         const res = await fetch("https://aspire-club.onrender.com/register", {
@@ -157,13 +200,13 @@
         const result = await res.json();
 
         if (result.status === 'success') {
-          statusMsg.innerText = "✅ Registered Successfully!";
+          statusMsg.textContent = "✅ Registered Successfully!";
           form.reset();
         } else {
-          statusMsg.innerText = "❌ Failed to submit.";
+          statusMsg.textContent = "❌ Submission failed.";
         }
       } catch (err) {
-        statusMsg.innerText = "❌ Error connecting to server.";
+        statusMsg.textContent = "❌ Error connecting to backend.";
         console.error(err);
       }
     });
