@@ -5,19 +5,25 @@ const bodyParser = require('body-parser');
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, 'public')));
+// Make sure the /data directory exists
+const dataDir = path.join(__dirname, 'data');
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir);
+}
 
 // Path to CSV file
-const csvFilePath = path.join(__dirname, 'data', 'registrations.csv');
+const csvFilePath = path.join(dataDir, 'registrations.csv');
 
-// Ensure CSV file exists with headers
+// Create CSV file with headers if not exists
 if (!fs.existsSync(csvFilePath)) {
   fs.writeFileSync(csvFilePath, 'Timestamp,Name,Email,Department,Year,Message\n');
 }
 
-// Register route
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Save to CSV route
 app.post('/register', (req, res) => {
   const { name, email, department, year, message } = req.body;
   const timestamp = new Date().toISOString();
@@ -26,7 +32,7 @@ app.post('/register', (req, res) => {
   fs.appendFile(csvFilePath, row, (err) => {
     if (err) {
       console.error('Error saving to CSV:', err);
-      return res.status(500).json({ status: 'error', message: 'Could not save data' });
+      return res.status(500).json({ status: 'error', message: 'Failed to save' });
     }
     return res.json({ status: 'success', message: 'Registration saved to CSV' });
   });
