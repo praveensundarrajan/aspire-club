@@ -13,29 +13,31 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 
-// Ensure CSV file exists
+// Create CSV if it doesn't exist
 if (!fs.existsSync(csvPath)) {
   fs.mkdirSync(path.dirname(csvPath), { recursive: true });
   fs.writeFileSync(csvPath, "Name,Email,Department,Year,Message\n");
 }
 
-// API to save registration
+// POST endpoint
 app.post("/register", (req, res) => {
+  console.log("Received registration:", req.body);
+
   const { name, email, department, year, message } = req.body;
   const entry = `"${name}","${email}","${department}","${year}","${message}"\n`;
 
   fs.appendFile(csvPath, entry, (err) => {
     if (err) {
       console.error("❌ Error writing to CSV:", err);
-      return res.status(500).json({ status: "error", message: "CSV write failed" });
+      return res.status(500).json({ status: "error" });
     }
 
     console.log("✅ Data saved to CSV");
-    return res.json({ status: "success", message: "Registration saved" });
+    return res.json({ status: "success" });
   });
 });
 
-// Server
+// Server Start
 app.listen(PORT, () => {
   console.log(`🚀 Aspire Club Backend running at http://localhost:${PORT}`);
 });
