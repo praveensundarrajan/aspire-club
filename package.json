@@ -1,14 +1,16 @@
 {
-  "name": "aspire-club-csv",
+  "name": "aspire-club-backend",
   "version": "1.0.0",
-  "description": "Aspire Club registration app with CSV backend",
+  "description": "Backend for Aspire Club registration system using Express and CSV storage",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "body-parser": "^1.20.2",
-    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
     "express": "^4.18.2"
-  }
+  },
+  "keywords": [],
+  "author": "PSR & Aspire Team",
+  "license": "MIT"
 }
