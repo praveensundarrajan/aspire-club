@@ -1,49 +1,171 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>Aspire Club Registration</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: Arial; display: flex; justify-content: center; align-items: center; height: 100vh; background: #1e1e2f; color: white; }
-    form { background: #2e2e3e; padding: 2rem; border-radius: 10px; box-shadow: 0 0 20px #000; }
-    input, textarea, select { width: 100%; padding: 10px; margin-top: 10px; border-radius: 5px; border: none; }
-    button { margin-top: 15px; padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; }
-    h2 { text-align: center; }
+    /* Base styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      min-height: 100vh;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      animation: bgScroll 20s linear infinite;
+    }
+
+    @keyframes bgScroll {
+      0% { background-position: 0 0; }
+      100% { background-position: 1000px 0; }
+    }
+
+    .form-container {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 30px;
+      border-radius: 15px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 20px rgba(0, 255, 150, 0.4);
+      width: 100%;
+      max-width: 500px;
+      animation: fadeIn 1s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .form-container h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #00ffc3;
+    }
+
+    label {
+      display: block;
+      margin: 10px 0 5px;
+      font-weight: 600;
+      color: #cafff8;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-size: 1rem;
+      background: #111;
+      color: #0f0;
+      outline: 2px solid #00ffc3;
+      transition: 0.2s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline-color: #00ff99;
+      background: #000;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      background: linear-gradient(45deg, #00ffae, #00ffc3);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px #00ffae;
+    }
+
+    .status {
+      margin-top: 15px;
+      text-align: center;
+      font-weight: bold;
+      color: #fff;
+    }
   </style>
 </head>
 <body>
-  <form id="regForm">
-    <h2>Aspire Club Registration</h2>
-    <input type="text" name="name" placeholder="Name" required />
-    <input type="email" name="email" placeholder="Email" required />
-    <input type="text" name="department" placeholder="Department" required />
-    <select name="year" required>
-      <option value="" disabled selected>Select Year</option>
-      <option>1st</option>
-      <option>2nd</option>
-      <option>3rd</option>
-      <option>4th</option>
-    </select>
-    <textarea name="message" placeholder="Your Message" rows="4"></textarea>
-    <button type="submit">Register</button>
-  </form>
+  <div class="form-container">
+    <h1>Join Aspire Club 🚀</h1>
+    <form id="regForm">
+      <label for="name">Full Name</label>
+      <input type="text" id="name" required />
+
+      <label for="email">Email</label>
+      <input type="email" id="email" required />
+
+      <label for="dept">Department</label>
+      <input type="text" id="dept" required />
+
+      <label for="year">Year</label>
+      <select id="year" required>
+        <option value="" disabled selected>Select Year</option>
+        <option>1st</option>
+        <option>2nd</option>
+        <option>3rd</option>
+        <option>4th</option>
+      </select>
+
+      <label for="msg">Message</label>
+      <textarea id="msg" rows="3" placeholder="Why do you want to join?"></textarea>
+
+      <button type="submit">🚀 Submit</button>
+      <div class="status" id="statusMsg"></div>
+    </form>
+  </div>
 
   <script>
     const form = document.getElementById('regForm');
+    const statusMsg = document.getElementById('statusMsg');
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const data = Object.fromEntries(new FormData(form).entries());
+      const data = {
+        name: form.name.value,
+        email: form.email.value,
+        department: form.dept.value,
+        year: form.year.value,
+        message: form.msg.value
+      };
 
-      const res = await fetch('/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+      statusMsg.innerText = "Submitting...";
 
-      const result = await res.json();
-      alert(result.message);
-      form.reset();
+      try {
+        const res = await fetch("https://aspire-club.onrender.com/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+
+        if (result.status === 'success') {
+          statusMsg.innerText = "✅ Registered Successfully!";
+          form.reset();
+        } else {
+          statusMsg.innerText = "❌ Failed to submit.";
+        }
+      } catch (err) {
+        statusMsg.innerText = "❌ Error connecting to server.";
+        console.error(err);
+      }
     });
   </script>
 </body>
