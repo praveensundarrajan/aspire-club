@@ -1,59 +1,69 @@
-const express = require("express");
-const fs = require("fs");
-const path = require("path");
-const cors = require("cors");
-const { exec } = require("child_process");
+const express = require('express');
+const fs = require('fs');
+const path = require('path');
+const cors = require('cors');
+const { execSync } = require('child_process');
+require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const csvPath = path.join(__dirname, "data", "registrations.csv");
+// Paths
+const DATA_FILE = path.join(__dirname, 'data', 'registrations.csv');
+const GIT_REMOTE = process.env.GIT_REMOTE;
 
 // Middleware
 app.use(cors());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(express.static("public"));
+app.use(express.static('public'));
 
-// Ensure CSV directory and file exist
-if (!fs.existsSync(csvPath)) {
-  fs.mkdirSync(path.dirname(csvPath), { recursive: true });
-  fs.writeFileSync(csvPath, "Name,Email,Department,Year,Message\n");
+// Ensure data folder and CSV file exist
+if (!fs.existsSync(path.join(__dirname, 'data'))) {
+  fs.mkdirSync(path.join(__dirname, 'data'));
+}
+if (!fs.existsSync(DATA_FILE)) {
+  fs.writeFileSync(DATA_FILE, 'Timestamp,Name,Email,Department,Year,Message\n');
 }
 
-// API to handle registration
-app.post("/register", (req, res) => {
+// API endpoint
+app.post('/register', (req, res) => {
   const { name, email, department, year, message } = req.body;
-  const entry = `"${name}","${email}","${department}","${year}","${message}"\n`;
+  const timestamp = new Date().toISOString();
+  const entry = `${timestamp},"${name}","${email}","${department}","${year}","${message}"\n`;
 
-  fs.appendFile(csvPath, entry, (err) => {
-    if (err) {
-      console.error("❌ Error writing to CSV:", err);
-      return res.status(500).json({ status: "error", message: "CSV write failed" });
+  try {
+    fs.appendFileSync(DATA_FILE, entry);
+    console.log('✅ Data saved to CSV');
+
+    try {
+      execSync(`git config --global user.email "you@example.com"`);
+      execSync(`git config --global user.name "praveensundarrajan"`);
+
+      try {
+        execSync(`git remote add origin ${GIT_REMOTE}`);
+      } catch {
+        execSync(`git remote set-url origin ${GIT_REMOTE}`);
+      }
+
+      execSync(`git checkout main`);
+      execSync(`git add ${DATA_FILE}`);
+      execSync(`git commit -m "New registration on ${timestamp}"`);
+      execSync(`git push origin main`);
+
+      console.log('🚀 Data pushed to GitHub');
+    } catch (gitErr) {
+      console.error('❌ Git push failed:', gitErr.message);
     }
 
-    console.log("✅ Data saved to CSV");
-    res.json({ status: "success", message: "Registration saved" });
-
-    // Git commands to commit and push to GitHub
-    const gitCommands = `
-      git config user.name "praveensundarrajan" &&
-      git config user.email "youremail@example.com" &&
-      git add ${csvPath} &&
-      git commit -m "New registration on ${new Date().toISOString()}" &&
-      git push origin main
-    `;
-
-    exec(gitCommands, (error, stdout, stderr) => {
-      if (error) {
-        console.error("❌ Git push failed:", stderr);
-      } else {
-        console.log("🚀 Git push successful:\n", stdout);
-      }
-    });
-  });
+    res.status(200).json({ status: 'success', message: 'Registered successfully' });
+  } catch (err) {
+    console.error('❌ CSV Write Error:', err.message);
+    res.status(500).json({ status: 'error', message: 'Internal Server Error' });
+  }
 });
 
-// Start the server
+// Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Aspire Club Backend running at http://localhost:${PORT}`);
+  console.log(`🚀 Aspire Club Backend is Running on http://localhost:${PORT}`);
 });
