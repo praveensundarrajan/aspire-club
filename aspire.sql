@@ -1,0 +1,13 @@
+CREATE DATABASE IF NOT EXISTS aspire_club;
+
+USE aspire_club;
+
+CREATE TABLE IF NOT EXISTS members (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  email VARCHAR(100) NOT NULL,
+  department VARCHAR(50),
+  year VARCHAR(50),
+  message TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
