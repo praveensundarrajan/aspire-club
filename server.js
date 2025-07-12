@@ -7,62 +7,69 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const CSV_FILE = path.join(__dirname, 'data', 'registrations.csv');
 
-// Middleware
+// GitHub remote URL with token
+const GIT_REMOTE = process.env.GIT_REMOTE; // add this in .env
+
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
-const csvFilePath = path.join(__dirname, 'data', 'registrations.csv');
-
-// Ensure data folder and CSV file exist
-if (!fs.existsSync(path.dirname(csvFilePath))) {
-    fs.mkdirSync(path.dirname(csvFilePath), { recursive: true });
-}
-if (!fs.existsSync(csvFilePath)) {
-    fs.writeFileSync(csvFilePath, 'Timestamp,Name,Email,Department,Year,Message\n', 'utf8');
+// Ensure CSV file exists
+if (!fs.existsSync(CSV_FILE)) {
+  fs.mkdirSync(path.dirname(CSV_FILE), { recursive: true });
+  fs.writeFileSync(CSV_FILE, 'Timestamp,Name,Email,Department,Year,Message\n');
 }
 
+// Registration Route
 app.post('/register', (req, res) => {
-    const { name, email, department, year, message } = req.body;
+  const { name, email, department, year, message } = req.body;
+  const timestamp = new Date().toISOString();
 
-    if (!name || !email || !department || !year) {
-        return res.status(400).json({ status: 'error', message: 'Missing required fields' });
-    }
+  const row = `"${timestamp}","${name}","${email}","${department}","${year}","${message}"\n`;
+  try {
+    fs.appendFileSync(CSV_FILE, row);
+    console.log('✅ Data saved to CSV');
 
-    const timestamp = new Date().toISOString();
-    const csvRow = `"${timestamp}","${name}","${email}","${department}","${year}","${message || ''}"\n`;
-
+    // Git setup and push
     try {
-        fs.appendFileSync(csvFilePath, csvRow, 'utf8');
-        console.log('✅ Data saved to CSV');
+      execSync(`git config --global user.email "you@example.com"`);
+      execSync(`git config --global user.name "AspireBot"`);
 
-        // GitHub push
-        const GIT_REMOTE = process.env.GIT_REMOTE;
+      try {
+        execSync(`git remote add origin ${GIT_REMOTE}`);
+      } catch {
+        execSync(`git remote set-url origin ${GIT_REMOTE}`);
+      }
 
-        execSync('git init');
-        execSync('git config user.email "aspire@club.com"');
-        execSync('git config user.name "Aspire Club Bot"');
+      try {
+        execSync('git checkout -b main');
+      } catch {
+        execSync('git checkout main');
+      }
 
-        try {
-            execSync(`git remote add origin ${GIT_REMOTE}`);
-        } catch {
-            execSync(`git remote set-url origin ${GIT_REMOTE}`);
-        }
+      execSync('git add data/registrations.csv');
+      execSync(`git commit -m "New registration on ${timestamp}"`);
+      execSync('git push -u origin main');
 
-        execSync('git checkout -b main || git checkout main');
-        execSync('git add data/registrations.csv');
-        execSync(`git commit -m "New registration on ${timestamp}"`);
-        execSync('git push -u origin main');
-
-        console.log('🚀 CSV pushed to GitHub');
-        res.status(200).json({ status: 'success' });
-    } catch (err) {
-        console.error('❌ Git push failed:', err.message);
-        res.status(500).json({ status: 'error', message: 'Git push failed' });
+      console.log('🚀 Data pushed to GitHub');
+    } catch (gitErr) {
+      console.error('❌ Git push failed:', gitErr.message);
     }
+
+    res.json({ status: 'success' });
+  } catch (err) {
+    console.error('❌ Failed to save data:', err.message);
+    res.status(500).json({ status: 'error', message: 'Server error' });
+  }
+});
+
+// Serve frontend
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.listen(PORT, () => {
-    console.log(`🚀 Aspire Club Backend is running on port ${PORT}`);
+  console.log(`🚀 Aspire Club Backend running at http://localhost:${PORT}`);
 });
