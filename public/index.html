@@ -6,71 +6,126 @@
   <title>Aspire Club Registration</title>
   <style>
     body {
+      margin: 0;
       font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
-      color: white;
+      background: linear-gradient(to right, #2C5364, #203A43, #0F2027);
+      color: #fff;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
+      overflow: hidden;
     }
-    form {
-      background: #111;
-      padding: 30px;
+
+    .container {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 40px;
       border-radius: 15px;
-      box-shadow: 0 0 30px #00ffcc80;
-      animation: fadeIn 1s ease-in;
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      width: 90%;
+      max-width: 450px;
+      animation: fadeIn 1.2s ease-in-out;
     }
+
+    @keyframes fadeIn {
+      from {opacity: 0; transform: scale(0.9);}
+      to {opacity: 1; transform: scale(1);}
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 25px;
+      font-size: 26px;
+    }
+
     input, select, textarea {
       width: 100%;
-      margin-bottom: 15px;
-      padding: 10px;
+      padding: 12px 15px;
+      margin: 10px 0;
       border: none;
-      border-radius: 5px;
+      border-radius: 8px;
+      font-size: 15px;
     }
+
     button {
-      background: #00ffcc;
-      color: #000;
-      padding: 10px 20px;
+      width: 100%;
+      padding: 12px;
+      background: #00C9A7;
       border: none;
-      border-radius: 5px;
+      border-radius: 8px;
+      color: #fff;
       font-weight: bold;
+      font-size: 16px;
       cursor: pointer;
+      transition: 0.3s ease;
     }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.8); }
-      to { opacity: 1; transform: scale(1); }
+
+    button:hover {
+      background: #00B89F;
+    }
+
+    .status {
+      text-align: center;
+      margin-top: 15px;
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
-  <form id="registrationForm">
-    <h2>Join Aspire Club</h2>
-    <input type="text" name="name" placeholder="Full Name" required />
-    <input type="email" name="email" placeholder="Email" required />
-    <input type="text" name="department" placeholder="Department" required />
-    <input type="text" name="year" placeholder="Year (e.g., 2nd)" required />
-    <textarea name="message" placeholder="Why do you want to join?" rows="4" required></textarea>
-    <button type="submit">Register</button>
-  </form>
+
+  <div class="container">
+    <h2>Aspire Club Registration</h2>
+    <form id="clubForm">
+      <input type="text" name="name" placeholder="Your Name" required />
+      <input type="email" name="email" placeholder="Email" required />
+      <input type="text" name="department" placeholder="Department" required />
+      <select name="year" required>
+        <option value="">Select Year</option>
+        <option value="1st Year">1st Year</option>
+        <option value="2nd Year">2nd Year</option>
+        <option value="3rd Year">3rd Year</option>
+        <option value="Final Year">Final Year</option>
+      </select>
+      <textarea name="message" placeholder="Why do you want to join?" rows="4"></textarea>
+      <button type="submit">Join Aspire Club</button>
+    </form>
+    <div class="status" id="statusMsg"></div>
+  </div>
 
   <script>
-    const form = document.getElementById("registrationForm");
-    form.addEventListener("submit", async (e) => {
+    const form = document.getElementById('clubForm');
+    const statusMsg = document.getElementById('statusMsg');
+
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      statusMsg.textContent = "Submitting...";
+
       const formData = new FormData(form);
-      const data = Object.fromEntries(formData.entries());
+      const data = {};
+      formData.forEach((value, key) => data[key] = value);
 
-      const res = await fetch("/api/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+      try {
+        const res = await fetch("https://aspire-club.onrender.com/api/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
 
-      const result = await res.json();
-      alert(result.message);
-      if (result.status === "success") form.reset();
+        const result = await res.json();
+        if (result.status === "success") {
+          statusMsg.textContent = "🎉 Registration Successful!";
+          form.reset();
+        } else {
+          statusMsg.textContent = "❌ Error: " + result.message;
+        }
+      } catch (err) {
+        console.error(err);
+        statusMsg.textContent = "❌ Failed to connect to server.";
+      }
     });
   </script>
+
 </body>
 </html>
