@@ -5,137 +5,71 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Aspire Club Registration</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Segoe UI', sans-serif;
-    }
-
     body {
-      background: linear-gradient(120deg, #0f2027, #203a43, #2c5364);
-      min-height: 100vh;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      color: white;
       display: flex;
       justify-content: center;
       align-items: center;
-      overflow: hidden;
+      height: 100vh;
     }
-
-    .container {
-      background: rgba(255, 255, 255, 0.95);
-      padding: 40px 50px;
-      border-radius: 20px;
-      box-shadow: 0 0 50px rgba(0, 255, 255, 0.1);
-      width: 90%;
-      max-width: 480px;
-      animation: fadeInSlide 1.2s ease-out forwards;
-      opacity: 0;
-      transform: translateY(30px);
+    form {
+      background: #111;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 0 30px #00ffcc80;
+      animation: fadeIn 1s ease-in;
     }
-
-    @keyframes fadeInSlide {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    h2 {
-      text-align: center;
-      color: #004aad;
-      margin-bottom: 25px;
-      animation: glow 2s ease-in-out infinite alternate;
-    }
-
-    @keyframes glow {
-      from {
-        text-shadow: 0 0 5px #00c3ff, 0 0 10px #00c3ff;
-      }
-      to {
-        text-shadow: 0 0 20px #00eaff, 0 0 40px #00eaff;
-      }
-    }
-
-    input, textarea {
+    input, select, textarea {
       width: 100%;
-      padding: 14px;
-      margin: 12px 0;
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      font-size: 15px;
-      transition: all 0.3s ease;
-    }
-
-    input:focus, textarea:focus {
-      border-color: #004aad;
-      box-shadow: 0 0 8px #00c3ff;
-      outline: none;
-    }
-
-    button {
-      width: 100%;
-      padding: 14px;
-      margin-top: 20px;
+      margin-bottom: 15px;
+      padding: 10px;
       border: none;
-      border-radius: 10px;
-      font-size: 16px;
-      background: linear-gradient(45deg, #004aad, #00c3ff);
-      color: #fff;
+      border-radius: 5px;
+    }
+    button {
+      background: #00ffcc;
+      color: #000;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
       cursor: pointer;
-      transition: all 0.3s ease-in-out;
     }
-
-    button:hover {
-      background: linear-gradient(45deg, #002e70, #009ecf);
-      transform: scale(1.02);
-    }
-
-    .footer {
-      text-align: center;
-      margin-top: 20px;
-      font-size: 13px;
-      color: #333;
-      animation: fadeIn 2s ease forwards;
-    }
-
     @keyframes fadeIn {
-      from { opacity: 0; }
-      to   { opacity: 1; }
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
     }
   </style>
 </head>
 <body>
-
-  <div class="container">
-    <h2>🚀 Join Aspire Club</h2>
-    <form id="aspireForm">
-      <input type="text" name="name" placeholder="Your Name" required />
-      <input type="email" name="email" placeholder="Your Email" required />
-      <input type="text" name="department" placeholder="Department" />
-      <input type="text" name="year" placeholder="Year" />
-      <textarea name="message" rows="4" placeholder="Why do you want to join?"></textarea>
-      <button type="submit">Register</button>
-    </form>
-    <div class="footer">✨ Be the change. Aspire higher.</div>
-  </div>
+  <form id="registrationForm">
+    <h2>Join Aspire Club</h2>
+    <input type="text" name="name" placeholder="Full Name" required />
+    <input type="email" name="email" placeholder="Email" required />
+    <input type="text" name="department" placeholder="Department" required />
+    <input type="text" name="year" placeholder="Year (e.g., 2nd)" required />
+    <textarea name="message" placeholder="Why do you want to join?" rows="4" required></textarea>
+    <button type="submit">Register</button>
+  </form>
 
   <script>
-    document.getElementById("aspireForm").addEventListener("submit", async function (e) {
+    const form = document.getElementById("registrationForm");
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
+      const formData = new FormData(form);
+      const data = Object.fromEntries(formData.entries());
 
-      const formData = new FormData(this);
-      const data = {};
-      formData.forEach((value, key) => data[key] = value);
-
-      const res = await fetch("http://localhost:3000/api/register", {
+      const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
       });
 
       const result = await res.json();
       alert(result.message);
-      this.reset();
+      if (result.status === "success") form.reset();
     });
   </script>
 </body>
